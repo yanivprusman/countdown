@@ -1,5 +1,6 @@
 package com.automatelinux.countdown
 
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -36,5 +37,15 @@ class MainActivity : ComponentActivity() {
         })
 
         setContent { App(api, nav) }
+    }
+
+    /**
+     * The manifest keeps the Activity alive through a day/night switch (so the screen you
+     * are on survives it), which also means enableEdgeToEdge() is not re-run by a
+     * recreate — and the status-bar icons stayed dark on the dark theme. Re-apply it.
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        enableEdgeToEdge()
     }
 }

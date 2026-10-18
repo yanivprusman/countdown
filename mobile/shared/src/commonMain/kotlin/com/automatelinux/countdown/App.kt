@@ -44,6 +44,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.automatelinux.countdown.data.Countdown
 import com.automatelinux.countdown.data.CountdownApi
@@ -69,6 +73,7 @@ import kotlinx.datetime.TimeZone
  * Only one offer stands at a time. Material queues snackbars, so three quick counts
  * would otherwise leave three Undo bars to sit through, each one taking back the wrong
  * thing — the newest offer replaces the one on screen, and its Undo is the last act.
+ * Long, not Short: four seconds was gone before a thumb reached Undo on the emulator.
  */
 class Undoable(
     private val host: SnackbarHostState,
@@ -77,7 +82,7 @@ class Undoable(
 ) {
     fun offerUndo(message: String) = scope.launch {
         host.currentSnackbarData?.dismiss()
-        val result = host.showSnackbar(message = message, actionLabel = "Undo", duration = SnackbarDuration.Short)
+        val result = host.showSnackbar(message = message, actionLabel = "Undo", duration = SnackbarDuration.Long)
         if (result == SnackbarResult.ActionPerformed) store.undoLast()
     }
 }
@@ -117,6 +122,37 @@ class Counter(
     }
 }
 
+/**
+ * How tall the current screen's bottom action is — the count button, the save button,
+ * the New FAB. The Undo bar and the error banner sit *above* it, never over it: in tally
+ * the bar covered the FAB (issue #8) and the fix there was to make it swipeable; here a
+ * second count tapped straight into the bar. A screen reports its own height with
+ * [reportsBottomAction], so the bar is placed by measurement, not by a guessed margin.
+ */
+class BottomAction {
+    private var owner: Any? = null
+    var height: Dp by mutableStateOf(0.dp)
+        private set
+
+    fun report(from: Any, h: Dp) { owner = from; height = h }
+
+    /** Screens cross-fade, so the leaving screen is disposed *after* the arriving one has
+     *  reported — it may only clear a height that is still its own. */
+    fun clear(from: Any) { if (owner === from) { owner = null; height = 0.dp } }
+}
+
+val LocalBottomAction = staticCompositionLocalOf<BottomAction> { error("No BottomAction in scope") }
+
+/** Marks this element as the screen's bottom action; cleared when the screen goes away. */
+@Composable
+fun Modifier.reportsBottomAction(): Modifier {
+    val action = LocalBottomAction.current
+    val density = LocalDensity.current
+    val me = remember { Any() }
+    DisposableEffect(Unit) { onDispose { action.clear(me) } }
+    return this.onSizeChanged { action.report(me, with(density) { it.height.toDp() }) }
+}
+
 val LocalUndoable = staticCompositionLocalOf<Undoable> { error("No Undoable in scope") }
 val LocalCounter = staticCompositionLocalOf<Counter> { error("No Counter in scope") }
 
@@ -132,8 +168,13 @@ fun App(api: CountdownApi, nav: Navigator) {
         val undoable = remember { Undoable(host, store, scope) }
         val haptics = LocalHapticFeedback.current
         val counter = remember { Counter(store, undoable, haptics) }
+        val bottomAction = remember { BottomAction() }
 
-        CompositionLocalProvider(LocalUndoable provides undoable, LocalCounter provides counter) {
+        CompositionLocalProvider(
+            LocalUndoable provides undoable,
+            LocalCounter provides counter,
+            LocalBottomAction provides bottomAction,
+        ) {
             Box(Modifier.fillMaxSize().background(T.bg)) {
                 val forward = nav.forward
                 AnimatedContent(
@@ -154,7 +195,10 @@ fun App(api: CountdownApi, nav: Navigator) {
                     }
                 }
 
-                Column(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(12.dp)) {
+                Column(
+                    Modifier.align(Alignment.BottomCenter).navigationBarsPadding()
+                        .padding(bottom = bottomAction.height).padding(12.dp),
+                ) {
                     store.error?.let { message -> ErrorBanner(message, onRetry = store::refresh, onHide = store::dismissError) }
                     SnackbarHost(hostState = host, modifier = Modifier.fillMaxWidth()) { data ->
                         UndoBar(data.visuals.message, data.visuals.actionLabel, data::performAction, data::dismiss)

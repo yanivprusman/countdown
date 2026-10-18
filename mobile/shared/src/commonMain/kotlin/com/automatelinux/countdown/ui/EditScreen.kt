@@ -52,6 +52,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.automatelinux.countdown.Navigator
 import com.automatelinux.countdown.Route
+import com.automatelinux.countdown.reportsBottomAction
 import com.automatelinux.countdown.data.CountdownStore
 import com.automatelinux.countdown.data.MaxNameLength
 import com.automatelinux.countdown.data.UnitSuggestions
@@ -269,7 +270,8 @@ fun EditScreen(store: CountdownStore, nav: Navigator, countdownId: String?) {
             enabled = canSave,
             shape = RoundedCornerShape(20.dp),
             color = if (canSave) T.brand else T.surfaceAlt,
-            modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 10.dp).height(58.dp),
+            modifier = Modifier.fillMaxWidth().navigationBarsPadding().reportsBottomAction()
+                .padding(horizontal = 16.dp, vertical = 10.dp).height(58.dp),
         ) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(

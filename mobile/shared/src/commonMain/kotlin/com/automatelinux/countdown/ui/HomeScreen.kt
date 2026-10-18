@@ -55,13 +55,14 @@ import com.automatelinux.countdown.LocalCounter
 import com.automatelinux.countdown.LocalUndoable
 import com.automatelinux.countdown.Navigator
 import com.automatelinux.countdown.Route
+import com.automatelinux.countdown.reportsBottomAction
 import com.automatelinux.countdown.data.Countdown
 import com.automatelinux.countdown.data.CountdownStore
 import com.automatelinux.countdown.data.countOf
 import com.automatelinux.countdown.data.formatCount
 import com.automatelinux.countdown.data.formatRelative
 import com.automatelinux.countdown.ui.components.ConfirmDialog
-import com.automatelinux.countdown.ui.components.DialArt
+import com.automatelinux.countdown.ui.components.CalendarArt
 import com.automatelinux.countdown.ui.components.MenuRow
 import com.automatelinux.countdown.ui.components.ProgressLine
 import com.automatelinux.countdown.ui.components.RoundIconButton
@@ -106,7 +107,7 @@ fun HomeScreen(store: CountdownStore, nav: Navigator) {
                 // An empty list before the first answer is not "no countdowns" — saying so
                 // would invite the user to start a duplicate of one they already have.
                 Box(Modifier.fillMaxSize().padding(bottom = 80.dp), contentAlignment = Alignment.Center) {
-                    DialArt(T.textFaint)
+                    CalendarArt(T.surfaceAlt, dim = true)
                 }
             } else if (countdowns.isEmpty()) {
                 EmptyHome()
@@ -138,7 +139,7 @@ fun HomeScreen(store: CountdownStore, nav: Navigator) {
                 contentColor = T.onBrand,
                 icon = { Icon(Icons.Rounded.Add, null) },
                 text = { Text("New countdown", style = MaterialTheme.typography.labelLarge) },
-                modifier = Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(20.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).navigationBarsPadding().reportsBottomAction().padding(20.dp),
             )
         }
     }
@@ -334,7 +335,7 @@ private fun EmptyHome() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        DialArt(T.brand)
+        CalendarArt(T.brand)
         Spacer(Modifier.height(28.dp))
         Text("Set a goal, count it down", style = MaterialTheme.typography.headlineMedium, color = T.text, textAlign = TextAlign.Center)
         Spacer(Modifier.height(10.dp))

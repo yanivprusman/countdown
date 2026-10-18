@@ -59,6 +59,7 @@ import com.automatelinux.countdown.LocalCounter
 import com.automatelinux.countdown.LocalUndoable
 import com.automatelinux.countdown.Navigator
 import com.automatelinux.countdown.Route
+import com.automatelinux.countdown.reportsBottomAction
 import com.automatelinux.countdown.data.Countdown
 import com.automatelinux.countdown.data.CountdownStore
 import com.automatelinux.countdown.data.Tick
@@ -69,7 +70,7 @@ import com.automatelinux.countdown.data.formatDayHeader
 import com.automatelinux.countdown.data.formatShortDate
 import com.automatelinux.countdown.data.formatTime
 import com.automatelinux.countdown.data.singular
-import com.automatelinux.countdown.ui.components.DialArt
+import com.automatelinux.countdown.ui.components.CalendarArt
 import com.automatelinux.countdown.ui.components.ProgressRing
 import com.automatelinux.countdown.ui.components.RoundIconButton
 import com.automatelinux.countdown.ui.components.ScreenHeader
@@ -292,7 +293,7 @@ private fun DayHeader(label: String, count: Int, unit: String) {
     ) {
         Text(label, style = MaterialTheme.typography.titleMedium, color = T.text, modifier = Modifier.weight(1f))
         // Only worth saying when a day holds more than one — the usual day holds exactly one.
-        if (count > 1) Text("$count ${unit}", style = MaterialTheme.typography.labelMedium, color = T.textFaint)
+        if (count > 1) Text("$count counted", style = MaterialTheme.typography.labelMedium, color = T.textFaint)
     }
 }
 
@@ -326,7 +327,8 @@ private fun TickRow(label: String, left: Int, tick: Tick, accent: Color, onClick
 @Composable
 private fun CountBar(c: Countdown, accent: Color, today: LocalDate, zone: TimeZone, onCount: () -> Unit) {
     val todays = c.countedOn(today, zone)
-    val modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 10.dp).height(64.dp)
+    val modifier = Modifier.fillMaxWidth().navigationBarsPadding().reportsBottomAction()
+        .padding(horizontal = 16.dp, vertical = 10.dp).height(64.dp)
     when {
         c.finished -> Surface(shape = RoundedCornerShape(22.dp), color = T.doneSoft, modifier = modifier) {
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -383,7 +385,7 @@ private fun Waiting(loading: Boolean, onBack: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            DialArt(T.textFaint)
+            CalendarArt(T.surfaceAlt, dim = true)
             Spacer(Modifier.height(20.dp))
             Text(
                 if (loading) "Fetching your countdown…" else "Waiting for the server to answer",

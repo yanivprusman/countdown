@@ -48,7 +48,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -137,8 +137,13 @@ fun ProgressRing(
         val arcSize = Size(size.width - w, size.height - w)
         drawArc(track, 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(w))
         if (animated > 0f) {
+            // Round caps reach half a stroke past each end, so at 99 of 100 the arc's tail
+            // would close the gap and look full. Below full, keep at least a visible notch.
+            val radius = (size.minDimension - w) / 2
+            val capsDeg = (w / radius) * (180f / kotlin.math.PI.toFloat())
+            val sweep = if (animated >= 1f) 360f else minOf(360f * animated, 360f - capsDeg - 6f).coerceAtLeast(0.1f)
             drawArc(
-                color, -90f, 360f * animated, false, Offset(inset, inset), arcSize,
+                color, -90f, sweep, false, Offset(inset, inset), arcSize,
                 style = Stroke(w, cap = StrokeCap.Round),
             )
         }
@@ -157,26 +162,31 @@ fun ProgressLine(left: Float, color: Color, modifier: Modifier = Modifier) {
 }
 
 /**
- * The dial from the launcher icon — twelve marks round a circle, the last few already
- * counted off and faded — reused wherever a screen is empty or waiting.
+ * The tear-off page from the launcher icon — "−1" on today's sheet — reused wherever a
+ * screen is empty or waiting. (A ring of ticks was tried first and read as a loading
+ * spinner, which is the last thing an empty screen should look like.)
  */
 @Composable
-fun DialArt(color: Color, modifier: Modifier = Modifier, lit: Int = 9) {
-    Canvas(modifier.size(96.dp)) {
-        val r = size.minDimension / 2
-        val w = r * 0.16f
-        for (i in 0 until 12) {
-            rotate(i * 30f) {
-                drawLine(
-                    color = if (i < lit) color else color.copy(alpha = 0.22f),
-                    start = Offset(center.x, center.y - r + w),
-                    end = Offset(center.x, center.y - r * 0.56f),
-                    strokeWidth = w,
-                    cap = StrokeCap.Round,
-                )
-            }
-        }
-        drawCircle(color, radius = w * 0.85f, center = center)
+fun CalendarArt(header: Color, modifier: Modifier = Modifier, dim: Boolean = false) {
+    val page = if (dim) T.surfaceAlt else T.surface
+    val ink = if (dim) T.textFaint else T.text
+    val under = T.line
+    val rings = T.textFaint
+    Canvas(modifier.size(width = 104.dp, height = 96.dp)) {
+        val u = size.width / 56f                       // drawn on a 56-unit grid
+        fun r(x: Float, y: Float, w: Float, h: Float, c: Color) = drawRoundRect(
+            c, Offset(x * u, y * u), Size(w * u, h * u), androidx.compose.ui.geometry.CornerRadius(8 * u),
+        )
+        r(2f, 9f, 54f, 39f, under)
+        r(0f, 5f, 54f, 39f, page)
+        clipRect(0f, 5 * u, 54 * u, 15 * u) { r(0f, 5f, 54f, 39f, header) }
+        val sw = 4.5f * u
+        drawLine(rings, Offset(13 * u, 1.5f * u), Offset(13 * u, 9 * u), sw, StrokeCap.Round)
+        drawLine(rings, Offset(41 * u, 1.5f * u), Offset(41 * u, 9 * u), sw, StrokeCap.Round)
+        val nw = 5.5f * u
+        drawLine(ink, Offset(11 * u, 29 * u), Offset(23 * u, 29 * u), nw, StrokeCap.Round)
+        drawLine(ink, Offset(31 * u, 23 * u), Offset(37.5f * u, 18.5f * u), nw, StrokeCap.Round)
+        drawLine(ink, Offset(37.5f * u, 18.5f * u), Offset(37.5f * u, 39 * u), nw, StrokeCap.Round)
     }
 }
 

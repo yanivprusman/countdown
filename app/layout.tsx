@@ -3,7 +3,7 @@ import "./globals.css";
 import FeedbackChatMount from "./FeedbackChatMount";
 
 export const metadata: Metadata = {
-  title: "countdown",
+  title: "Countdown",
   description: "Count down toward a goal you set — 100 days of work, 30 runs. The starting number stays on screen; one tap counts one off. Several countdowns side by side, each with its own history, reset and delete.",
 };
 
