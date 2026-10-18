@@ -27,9 +27,22 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.materialIconsExtended)
+            implementation(compose.animation)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
+            // Explicit, not transitive: `implementation` hides a dependency's own
+            // dependencies from the compile classpath, so Dispatchers/withContext in
+            // androidMain would not resolve through compose.runtime.
+            implementation(libs.kotlinx.coroutines.core)
             implementation(libs.multiplatform.settings)
+        }
+        // What is left, what counts as "today" and how long the streak is are the
+        // numbers this app exists to show; a day boundary that is off by one is wrong
+        // on screen every single day, and nothing would say so.
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            // MapSettings: the navigator's memory of the open countdown, without a phone.
+            implementation(libs.multiplatform.settings.test)
         }
     }
 }

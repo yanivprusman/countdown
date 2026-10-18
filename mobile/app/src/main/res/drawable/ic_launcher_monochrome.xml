@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Themed-icon variant: the system tints it one flat colour, so the page is drawn as
+         an outline and the "−1" stays readable instead of vanishing into a filled page. -->
+    <group android:pivotX="54" android:pivotY="57" android:scaleX="0.82" android:scaleY="0.82">
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="4.5"
+            android:pathData="M33,36 h40 a8,8 0 0 1 8,8 v28 a8,8 0 0 1 -8,8 h-40 a8,8 0 0 1 -8,-8 v-28 a8,8 0 0 1 8,-8z" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="4.5"
+            android:pathData="M25,48 h56" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="4.5" android:strokeLineCap="round"
+            android:pathData="M41,29 v8" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="4.5" android:strokeLineCap="round"
+            android:pathData="M65,29 v8" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="6" android:strokeLineCap="round"
+            android:pathData="M37.5,63 h12" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="6" android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M57,57 l6.5,-4.5 v22" />
+    </group>
+</vector>
