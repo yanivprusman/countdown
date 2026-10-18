@@ -14,9 +14,6 @@ if (!fs.existsSync(path.join(workspaceRoot, 'packages/feedback-lib/package.json'
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',') ?? [],
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
   transpilePackages: ['@claudecontrol/feedback-lib', '@addnewfeature/feedback-lib-launcher'],
   turbopack: {
     root: turbopackRoot,

@@ -1,5 +1,5 @@
 {
-  "name": "tmp-create-countdown-1792350539",
+  "name": "countdown",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,11 +11,14 @@
   "dependencies": {
     "@addnewfeature/feedback-lib-launcher": "file:../../automateLinux/packages/feedback-lib-launcher",
     "@claudecontrol/feedback-lib": "file:../../automateLinux/packages/feedback-lib",
+    "mysql2": "^3.24.6",
     "next": "16.4.2",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
