@@ -17,6 +17,7 @@ export function countdownFields(b: Record<string, unknown>, id: string): Countdo
     unit,
     accent: Number(b.accent ?? 0) | 0,
     oncePerDay: Boolean(b.oncePerDay),
+    askJob: Boolean(b.askJob),
     createdAt: Number(b.createdAt) || Date.now(),
   };
 }

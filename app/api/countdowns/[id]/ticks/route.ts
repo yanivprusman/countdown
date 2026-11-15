@@ -10,6 +10,6 @@ export const POST = guarded(async (request, ctx) => {
   const tickId = String(b.id ?? "").trim();
   const at = Number(b.at);
   if (!tickId || !at) return Response.json({ ok: false, error: "id and at are required" }, { status: 400 });
-  await addTick(id, { id: tickId, note: String(b.note ?? ""), at });
+  await addTick(id, { id: tickId, note: String(b.note ?? ""), job: String(b.job ?? "").trim(), at });
   return Response.json({ ok: true });
 });

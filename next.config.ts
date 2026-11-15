@@ -14,7 +14,7 @@ if (!fs.existsSync(path.join(workspaceRoot, 'packages/feedback-lib/package.json'
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',') ?? [],
-  transpilePackages: ['@claudecontrol/feedback-lib', '@addnewfeature/feedback-lib-launcher'],
+  transpilePackages: ['@automatelinux/geo', '@claudecontrol/feedback-lib', '@addnewfeature/feedback-lib-launcher'],
   turbopack: {
     root: turbopackRoot,
     rules: {

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@addnewfeature/feedback-lib-launcher": "file:../../automateLinux/packages/feedback-lib-launcher",
+    "@automatelinux/geo": "file:../../automateLinux/packages/geo",
     "@claudecontrol/feedback-lib": "file:../../automateLinux/packages/feedback-lib",
     "mysql2": "^3.24.6",
     "next": "16.4.2",

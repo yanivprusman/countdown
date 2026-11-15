@@ -36,3 +36,28 @@ CREATE TABLE IF NOT EXISTS ticks (
   KEY idx_countdown (countdown_id, at),
   CONSTRAINT fk_tick_countdown FOREIGN KEY (countdown_id) REFERENCES countdowns(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Which job a tick was, and where it was counted (2026-11-15). A countdown of work
+-- days is only checkable afterwards if each day says what it was: "Day 14 — the
+-- Ofakim roof, Ofakim" can be held against the diary, a bare "Day 14" cannot.
+-- `ask_job` is per countdown: a work-days goal wants it, thirty runs do not.
+-- `place` is resolved on the server from lat/lon (Nominatim, through @automatelinux/geo).
+-- MySQL 8.4 has no ADD COLUMN IF NOT EXISTS, so each column is added only when
+-- information_schema says it is missing — the file stays re-runnable.
+DROP PROCEDURE IF EXISTS countdown_add_column;
+DELIMITER //
+CREATE PROCEDURE countdown_add_column(IN t VARCHAR(64), IN c VARCHAR(64), IN def TEXT)
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_schema = DATABASE() AND table_name = t AND column_name = c) THEN
+    SET @ddl = CONCAT('ALTER TABLE `', t, '` ADD COLUMN `', c, '` ', def);
+    PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+  END IF;
+END //
+DELIMITER ;
+CALL countdown_add_column('countdowns', 'ask_job', 'TINYINT NOT NULL DEFAULT 0 AFTER once_per_day');
+CALL countdown_add_column('ticks', 'job',   "VARCHAR(80)  NOT NULL DEFAULT '' AFTER note");
+CALL countdown_add_column('ticks', 'lat',   'DOUBLE NULL AFTER job');
+CALL countdown_add_column('ticks', 'lon',   'DOUBLE NULL AFTER lat');
+CALL countdown_add_column('ticks', 'place', "VARCHAR(160) NOT NULL DEFAULT '' AFTER lon");
+DROP PROCEDURE countdown_add_column;
