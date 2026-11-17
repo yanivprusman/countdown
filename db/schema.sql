@@ -61,3 +61,22 @@ CALL countdown_add_column('ticks', 'lat',   'DOUBLE NULL AFTER job');
 CALL countdown_add_column('ticks', 'lon',   'DOUBLE NULL AFTER lat');
 CALL countdown_add_column('ticks', 'place', "VARCHAR(160) NOT NULL DEFAULT '' AFTER lon");
 DROP PROCEDURE countdown_add_column;
+
+-- What a counted day paid (2026-11-17). A day that says what it earned is an income in
+-- tazrim, keyed by the tick (lib/tazrim.ts); `tazrim_error` says why tazrim does not
+-- have it yet, and is retried on every list. `vat`: 'plus' | 'included' | 'none'.
+DROP PROCEDURE IF EXISTS countdown_add_column;
+DELIMITER //
+CREATE PROCEDURE countdown_add_column(IN t VARCHAR(64), IN c VARCHAR(64), IN def TEXT)
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_schema = DATABASE() AND table_name = t AND column_name = c) THEN
+    SET @ddl = CONCAT('ALTER TABLE `', t, '` ADD COLUMN `', c, '` ', def);
+    PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+  END IF;
+END //
+DELIMITER ;
+CALL countdown_add_column('ticks', 'amount',       'DECIMAL(10,2) NULL AFTER place');
+CALL countdown_add_column('ticks', 'vat',          "VARCHAR(8)   NOT NULL DEFAULT '' AFTER amount");
+CALL countdown_add_column('ticks', 'tazrim_error', "VARCHAR(200) NOT NULL DEFAULT '' AFTER vat");
+DROP PROCEDURE countdown_add_column;

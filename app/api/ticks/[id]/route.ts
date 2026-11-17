@@ -1,11 +1,12 @@
 import { reverseGeocode } from "@automatelinux/geo";
 import { guarded } from "@/lib/auth";
-import { coord, deleteTick, setTickLocation, setTickPlace, updateTickWords } from "@/lib/countdowns";
+import { coord, deleteTick, setTickLocation, setTickPay, setTickPlace, syncIncomeIfPaid, updateTickWords } from "@/lib/countdowns";
 
 export const runtime = "nodejs";
 
 /**
- * What can change about a tick after it was counted: its note, its job, and where it
+ * What can change about a tick after it was counted: its note, its job, what it paid
+ * (`amount` + `vat`, which becomes its income in tazrim), and where it
  * was — the phone sends the location a few seconds after the count, since a fix takes
  * longer than a tap. When it happened is a fact, not a setting, and never changes.
  *
@@ -20,6 +21,10 @@ export const PATCH = guarded(async (request, ctx) => {
   if ("note" in b) words.note = String(b.note ?? "").trim();
   if ("job" in b) words.job = String(b.job ?? "").trim();
   await updateTickWords(id, words);
+
+  // What the day paid goes to tazrim with it; a new job renames the income there too.
+  if ("amount" in b) await setTickPay(id, b.amount, b.vat);
+  else if (words.job !== undefined || words.note !== undefined) await syncIncomeIfPaid(id);
 
   if (!("lat" in b) && !("lon" in b)) return Response.json({ ok: true });
 
@@ -45,3 +50,4 @@ export const DELETE = guarded(async (_request, ctx) => {
   await deleteTick(id);
   return Response.json({ ok: true });
 });
+
