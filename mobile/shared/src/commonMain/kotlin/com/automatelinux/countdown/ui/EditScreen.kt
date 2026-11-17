@@ -94,6 +94,7 @@ fun EditScreen(store: CountdownStore, nav: Navigator, countdownId: String?) {
     var unit by remember { mutableStateOf(existing?.unit ?: "days") }
     var accent by remember { mutableStateOf(existing?.accent ?: (store.countdowns.size % AccentPalette.size)) }
     var oncePerDay by remember { mutableStateOf(existing?.oncePerDay ?: true) }
+    var askJob by remember { mutableStateOf(existing?.askJob ?: false) }
     val nameFocus = remember { FocusRequester() }
     val focus = LocalFocusManager.current
 
@@ -106,10 +107,10 @@ fun EditScreen(store: CountdownStore, nav: Navigator, countdownId: String?) {
     fun save() {
         if (!canSave || start == null) return
         if (existing == null) {
-            val id = store.createCountdown(name, start, unit, accent, oncePerDay)
+            val id = store.createCountdown(name, start, unit, accent, oncePerDay, askJob)
             nav.replaceTop(Route.Detail(id))
         } else {
-            store.updateCountdown(existing.id, name, start, unit, accent, oncePerDay)
+            store.updateCountdown(existing.id, name, start, unit, accent, oncePerDay, askJob)
             nav.back()
         }
     }
@@ -262,6 +263,13 @@ fun EditScreen(store: CountdownStore, nav: Navigator, countdownId: String?) {
                     )
                 }
             }
+            Spacer(Modifier.height(10.dp))
+            ToggleRow(
+                title = "Ask what each one was",
+                body = "Right after a count: what the day was and what it paid. The pay goes into tazrim as income.",
+                checked = askJob,
+                onChange = { askJob = it },
+            )
             Spacer(Modifier.height(24.dp))
         }
 
@@ -310,6 +318,28 @@ private fun Chip(label: String, selected: Boolean, modifier: Modifier = Modifier
                 color = if (selected) T.brandInk else T.textDim,
                 maxLines = 1,
                 modifier = Modifier.padding(horizontal = 13.dp, vertical = 10.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ToggleRow(title: String, body: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Surface(onClick = { onChange(!checked) }, shape = RoundedCornerShape(18.dp), color = T.surface, modifier = Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(start = 18.dp, end = 14.dp, top = 14.dp, bottom = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, color = T.text)
+                Spacer(Modifier.height(2.dp))
+                Text(body, style = MaterialTheme.typography.bodyMedium, color = T.textDim)
+            }
+            Spacer(Modifier.width(12.dp))
+            Switch(
+                checked = checked,
+                onCheckedChange = onChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = T.onBrand, checkedTrackColor = T.brand,
+                    uncheckedThumbColor = T.textFaint, uncheckedTrackColor = T.surfaceAlt, uncheckedBorderColor = T.line,
+                ),
             )
         }
     }

@@ -56,6 +56,7 @@ import com.automatelinux.countdown.data.countOf
 import com.automatelinux.countdown.data.formatTime
 import com.automatelinux.countdown.data.singular
 import com.automatelinux.countdown.data.today
+import com.automatelinux.countdown.ui.DayDialog
 import com.automatelinux.countdown.ui.DetailScreen
 import com.automatelinux.countdown.ui.EditScreen
 import com.automatelinux.countdown.ui.HomeScreen
@@ -101,6 +102,14 @@ class Counter(
     var askingFor: Countdown? by mutableStateOf(null)
         private set
 
+    /** The day just counted, waiting to be told what it was and what it paid. */
+    data class Describing(val countdownId: String, val tickId: String)
+
+    var describing: Describing? by mutableStateOf(null)
+        private set
+
+    fun doneDescribing() { describing = null }
+
     fun request(c: Countdown) {
         if (c.finished) return
         val zone = TimeZone.currentSystemDefault()
@@ -113,8 +122,10 @@ class Counter(
     fun cancel() { askingFor = null }
 
     private fun count(c: Countdown) {
-        val left = store.count(c.id) ?: return
+        val (left, tickId) = store.count(c.id) ?: return
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        // Asked straight away, while the day is fresh — not left to fill in by hand later.
+        if (c.askJob) describing = Describing(c.id, tickId)
         undoable.offerUndo(
             if (left == 0) "That was the last one — ${countOf(c.start, c.unit)} done"
             else "Counted · ${countOf(left, c.unit)} to go",
@@ -203,6 +214,27 @@ fun App(api: CountdownApi, nav: Navigator) {
                     SnackbarHost(hostState = host, modifier = Modifier.fillMaxWidth()) { data ->
                         UndoBar(data.visuals.message, data.visuals.actionLabel, data::performAction, data::dismiss)
                     }
+                }
+            }
+
+            counter.describing?.let { d ->
+                val c = store.countdown(d.countdownId)
+                val tick = c?.ticks?.firstOrNull { it.id == d.tickId }
+                if (c == null || tick == null) {
+                    // Undone (or deleted) while the question was up: nothing left to describe.
+                    counter.doneDescribing()
+                } else {
+                    DayDialog(
+                        title = "${singular(c.unit).replaceFirstChar { it.uppercaseChar() }} ${c.chronological.indexOfFirst { it.id == tick.id } + 1}",
+                        countdown = c,
+                        tick = tick,
+                        isNew = true,
+                        onSave = { job, amount, vat ->
+                            store.describeTick(c.id, tick.id, job, amount, vat)
+                            counter.doneDescribing()
+                        },
+                        onDismiss = counter::doneDescribing,
+                    )
                 }
             }
 

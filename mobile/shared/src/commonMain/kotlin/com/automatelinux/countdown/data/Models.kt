@@ -9,8 +9,23 @@ import kotlinx.serialization.Serializable
 data class Tick(
     val id: String,
     val note: String = "",
+    /** What the day was — "Dolphinarium, Tel Aviv, aluminium". */
+    val job: String = "",
+    // Where it was counted. Carried so an undo puts a removed day back exactly as it was.
+    val lat: Double? = null,
+    val lon: Double? = null,
+    val place: String = "",
+    /** What the day paid, as said: net with `vat` = "plus", or the whole sum. Null = not said. */
+    val amount: Double? = null,
+    /** "plus" | "included" | "none"; empty without an amount. */
+    val vat: String = "",
+    /** Why tazrim does not have this day's income yet; empty when it does. */
+    val tazrimError: String = "",
     val at: Long,
-)
+) {
+    /** What to call the day on screen: its job, else whatever note it carries. */
+    val title: String get() = job.ifBlank { note }
+}
 
 /**
  * A goal being counted down: 100 days of work, 30 runs.
@@ -29,6 +44,8 @@ data class Countdown(
     val accent: Int = 0,
     /** A second count on the same day asks first. On by default: most goals are daily. */
     val oncePerDay: Boolean = true,
+    /** After each count, ask what the day was and what it paid. The pay goes to tazrim. */
+    val askJob: Boolean = false,
     val createdAt: Long,
     val ticks: List<Tick> = emptyList(),
 ) {

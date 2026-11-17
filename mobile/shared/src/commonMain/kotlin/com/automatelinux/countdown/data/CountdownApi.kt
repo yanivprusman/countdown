@@ -29,6 +29,9 @@ private data class Ack(val ok: Boolean = false, val error: String? = null)
 private data class TickBody(val id: String, val note: String, val at: Long)
 
 @Serializable
+private data class DayBody(val job: String, val amount: Double?, val vat: String)
+
+@Serializable
 private data class NoteBody(val note: String)
 
 /**
@@ -69,6 +72,10 @@ class CountdownApi(baseUrl: String, private val token: String) {
 
     suspend fun updateNote(tickId: String, note: String): String? =
         call("PATCH", "/api/ticks/$tickId", json.encodeToString(NoteBody.serializer(), NoteBody(note)))
+
+    /** What the day was and what it paid. The server passes the pay on to tazrim. */
+    suspend fun describeTick(tickId: String, job: String, amount: Double?, vat: String): String? =
+        call("PATCH", "/api/ticks/$tickId", json.encodeToString(DayBody.serializer(), DayBody(job, amount, vat)))
 
     suspend fun deleteTick(id: String): String? = call("DELETE", "/api/ticks/$id", null)
 

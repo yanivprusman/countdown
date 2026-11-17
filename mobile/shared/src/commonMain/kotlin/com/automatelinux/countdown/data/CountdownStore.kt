@@ -83,19 +83,21 @@ class CountdownStore(private val api: CountdownApi, private val scope: Coroutine
 
     // ---- countdowns -------------------------------------------------------------
 
-    fun createCountdown(name: String, start: Int, unit: String, accent: Int, oncePerDay: Boolean): String {
+    fun createCountdown(name: String, start: Int, unit: String, accent: Int, oncePerDay: Boolean, askJob: Boolean): String {
         val c = Countdown(
             id = newId(), name = name.trim(), start = start, unit = unit.trim(),
-            accent = accent, oncePerDay = oncePerDay, createdAt = now(),
+            accent = accent, oncePerDay = oncePerDay, askJob = askJob, createdAt = now(),
         )
         countdowns = countdowns + c
         push { api.saveCountdown(c) }
         return c.id
     }
 
-    fun updateCountdown(id: String, name: String, start: Int, unit: String, accent: Int, oncePerDay: Boolean) {
+    fun updateCountdown(id: String, name: String, start: Int, unit: String, accent: Int, oncePerDay: Boolean, askJob: Boolean) {
         val current = countdown(id) ?: return
-        val updated = current.copy(name = name.trim(), start = start, unit = unit.trim(), accent = accent, oncePerDay = oncePerDay)
+        val updated = current.copy(
+            name = name.trim(), start = start, unit = unit.trim(), accent = accent, oncePerDay = oncePerDay, askJob = askJob,
+        )
         countdowns = countdowns.map { if (it.id == id) updated else it }
         push { api.updateCountdown(updated) }
     }
@@ -111,7 +113,9 @@ class CountdownStore(private val api: CountdownApi, private val scope: Coroutine
             id = newId(),
             name = copyName(source.name),
             createdAt = now(),
-            ticks = source.ticks.map { it.copy(id = newId()) },
+            // The copy is a what-if: the money was earned once, by the original, so
+            // the copy's days carry no pay — otherwise tazrim would count it twice.
+            ticks = source.ticks.map { it.copy(id = newId(), amount = null, vat = "", tazrimError = "") },
         )
         countdowns = countdowns + copy
         push { api.saveCountdown(copy) }
@@ -135,8 +139,11 @@ class CountdownStore(private val api: CountdownApi, private val scope: Coroutine
 
     // ---- ticks ------------------------------------------------------------------
 
-    /** Counts one off. Returns what is left afterwards, for the snackbar to say. */
-    fun count(countdownId: String): Int? {
+    /** What a count did: what is left, for the snackbar, and the new tick, to describe. */
+    data class Counted(val left: Int, val tickId: String)
+
+    /** Counts one off. */
+    fun count(countdownId: String): Counted? {
         val c = countdown(countdownId) ?: return null
         if (c.finished) return null
         val t = Tick(id = newId(), at = now())
@@ -151,7 +158,29 @@ class CountdownStore(private val api: CountdownApi, private val scope: Coroutine
                 refresh()
             }
         }
-        return c.left - 1
+        return Counted(c.left - 1, t.id)
+    }
+
+    /**
+     * What the day was and what it paid. Sent after the count rather than with it, so
+     * the count itself is never held up by typing — and so the same call edits it later.
+     */
+    fun describeTick(countdownId: String, tickId: String, job: String, amount: Double?, vat: String) {
+        val cleanJob = job.trim().take(80)
+        val paid = amount?.takeIf { it > 0 }
+        val cleanVat = if (paid == null) "" else vat
+        countdowns = countdowns.map { c ->
+            if (c.id != countdownId) c
+            else c.copy(ticks = c.ticks.map {
+                if (it.id == tickId) it.copy(job = cleanJob, amount = paid, vat = cleanVat, tazrimError = "") else it
+            })
+        }
+        scope.launch {
+            val e = writes.withLock { api.describeTick(tickId, cleanJob, paid, cleanVat) }
+            // Re-read either way: the server says whether tazrim took the income.
+            if (e != null) error = e
+            refresh()
+        }
     }
 
     fun updateNote(countdownId: String, tickId: String, note: String) {

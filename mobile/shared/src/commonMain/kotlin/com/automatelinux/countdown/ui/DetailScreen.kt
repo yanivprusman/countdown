@@ -172,7 +172,8 @@ fun DetailScreen(store: CountdownStore, nav: Navigator, countdownId: String) {
                 }
                 item(key = "hint") {
                     Text(
-                        "Tap one to add a note · swipe left to remove it",
+                        if (countdown.askJob) "Tap one to change what it was or paid · swipe left to remove it"
+                        else "Tap one to add a note · swipe left to remove it",
                         style = MaterialTheme.typography.labelMedium,
                         color = T.textFaint,
                         textAlign = TextAlign.Center,
@@ -200,7 +201,17 @@ fun DetailScreen(store: CountdownStore, nav: Navigator, countdownId: String) {
             nav.popToHome()
         }, onDismiss = { confirmDelete = false })
     }
-    editingNote?.let { tick ->
+    editingNote?.takeIf { countdown.askJob }?.let { tick ->
+        DayDialog(
+            title = ordinal(countdown.unit, numbered.first { it.second.id == tick.id }.first),
+            countdown = countdown,
+            tick = tick,
+            isNew = false,
+            onSave = { job, amount, vat -> store.describeTick(countdown.id, tick.id, job, amount, vat); editingNote = null },
+            onDismiss = { editingNote = null },
+        )
+    }
+    editingNote?.takeIf { !countdown.askJob }?.let { tick ->
         NoteDialog(
             title = ordinal(countdown.unit, numbered.first { it.second.id == tick.id }.first),
             initial = tick.note,
@@ -309,9 +320,25 @@ private fun TickRow(label: String, left: Int, tick: Tick, accent: Color, onClick
                     Spacer(Modifier.width(8.dp))
                     Text("${formatCount(left.coerceAtLeast(0))} left", style = MaterialTheme.typography.labelMedium, color = T.textFaint, modifier = Modifier.padding(bottom = 1.dp))
                 }
-                if (tick.note.isNotBlank()) {
+                if (tick.title.isNotBlank()) {
                     Spacer(Modifier.height(2.dp))
-                    Text(tick.note, style = MaterialTheme.typography.bodyMedium, color = T.textDim, maxLines = 2)
+                    Text(tick.title, style = MaterialTheme.typography.bodyMedium, color = T.textDim, maxLines = 2)
+                }
+                // A note that says more than the job (the reconstructed days carry one).
+                if (tick.job.isNotBlank() && tick.note.isNotBlank() && tick.note != tick.job) {
+                    Text(tick.note, style = MaterialTheme.typography.labelMedium, color = T.textFaint, maxLines = 2)
+                }
+                if (tick.place.isNotBlank() && tick.place != tick.title) {
+                    Text(tick.place, style = MaterialTheme.typography.labelMedium, color = T.textFaint, maxLines = 1)
+                }
+                val pay = payLabel(tick)
+                if (pay.isNotEmpty()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(pay, style = MaterialTheme.typography.labelLarge, color = T.text)
+                }
+                // Out loud: a day missing from the forecast must never look like it is in it.
+                if (tick.tazrimError.isNotBlank()) {
+                    Text("Not in tazrim yet — ${tick.tazrimError}", style = MaterialTheme.typography.labelMedium, color = T.danger, maxLines = 3)
                 }
             }
             Spacer(Modifier.width(10.dp))
