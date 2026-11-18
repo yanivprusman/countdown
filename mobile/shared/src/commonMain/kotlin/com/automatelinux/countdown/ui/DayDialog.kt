@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -96,6 +97,10 @@ fun DayDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        // Kept above the keyboard, or Save sits under it (2026-11-18). The window is full
+        // size now, so the side margin the platform used to give is given here.
+        properties = imeAwareDialogProperties(),
+        modifier = Modifier.safeDrawingPadding().padding(horizontal = 24.dp, vertical = 16.dp),
         containerColor = T.surface,
         titleContentColor = T.text,
         shape = RoundedCornerShape(24.dp),
